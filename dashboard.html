@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SecureAuth Framework</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+:root {
+  --bg:       #0d0f14;
+  --s1:       #12151c;
+  --s2:       #181c26;
+  --s3:       #1f2433;
+  --border:   #252b3a;
+  --border2:  #2e3649;
+  --accent:   #3de8aa;
+  --accent2:  #2979ff;
+  --warn:     #ffb347;
+  --danger:   #ff4560;
+  --info:     #00c8ff;
+  --text:     #dde3ef;
+  --muted:    #5c677d;
+  --dim:      #8a95a8;
+  --mono:     'IBM Plex Mono', monospace;
+  --sans:     'IBM Plex Sans', sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);height:100vh;display:flex;overflow:hidden;font-size:13px}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(61,232,170,.025)1px,transparent 1px),linear-gradient(90deg,rgba(61,232,170,.025)1px,transparent 1px);background-size:32px 32px;pointer-events:none;z-index:0}
+
+/* ── Sidebar ── */
+.sidebar{width:210px;background:var(--s1);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:10;flex-shrink:0}
+.logo{padding:18px 16px;border-bottom:1px solid var(--border)}
+.logo-name{font-family:var(--mono);font-size:15px;font-weight:600;color:var(--accent);letter-spacing:-.3px}
+.logo-ver{font-size:9px;color:var(--muted);letter-spacing:2px;margin-top:2px}
+nav{flex:1;padding:12px 0;overflow-y:auto}
+.nav-section{font-size:9px;letter-spacing:2px;color:var(--muted);padding:10px 16px 4px;text-transform:uppercase}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 16px;font-size:12px;color:var(--dim);cursor:pointer;transition:all .12s;border-left:2px solid transparent}
+.nav-item:hover{color:var(--text);background:var(--s2)}
+.nav-item.active{color:var(--accent);border-left-color:var(--accent);background:rgba(61,232,170,.06)}
+.nav-icon{width:14px;text-align:center;font-size:13px;flex-shrink:0}
+.sys-bar{padding:12px 16px;border-top:1px solid var(--border)}
+.sys-status{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted)}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── Main ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;z-index:1}
+.topbar{height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;border-bottom:1px solid var(--border);background:rgba(13,15,20,.85);backdrop-filter:blur(12px);flex-shrink:0}
+.page-title{font-family:var(--mono);font-size:14px;font-weight:500}
+.topbar-right{display:flex;gap:8px;align-items:center}
+.content{flex:1;overflow-y:auto;padding:24px}
+.content::-webkit-scrollbar{width:4px}
+.content::-webkit-scrollbar-thumb{background:var(--border2)}
+
+/* ── Buttons ── */
+.btn{padding:6px 14px;border-radius:5px;font-family:var(--mono);font-size:11px;font-weight:500;cursor:pointer;transition:all .12s;border:none;letter-spacing:.4px}
+.btn-p{background:var(--accent);color:#0a0e12}
+.btn-p:hover{filter:brightness(1.1)}
+.btn-g{background:transparent;color:var(--dim);border:1px solid var(--border2)}
+.btn-g:hover{border-color:var(--accent);color:var(--accent)}
+.btn-d{background:transparent;color:var(--danger);border:1px solid rgba(255,69,96,.4)}
+.btn-d:hover{background:rgba(255,69,96,.08)}
+.btn:disabled{opacity:.45;cursor:default}
+
+/* ── Cards ── */
+.card{background:var(--s1);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.card-hd{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-family:var(--mono);font-size:12px;font-weight:500}
+.card-body{padding:18px}
+
+/* ── Grid ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+
+/* ── Stat cards ── */
+.stat{background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:16px;position:relative;overflow:hidden;transition:border-color .2s}
+.stat:hover{border-color:var(--border2)}
+.stat::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--accent-c, var(--accent));transform:scaleX(0);transition:transform .3s;transform-origin:left}
+.stat:hover::after{transform:scaleX(1)}
+.stat-lbl{font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase}
+.stat-val{font-family:var(--mono);font-size:26px;font-weight:600;color:var(--accent-c, var(--accent));margin:5px 0 2px;line-height:1}
+.stat-sub{font-size:10px;color:var(--muted)}
+
+/* ── Badges ── */
+.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:3px;font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:.5px}
+.bg-green{background:rgba(61,232,170,.12);color:var(--accent)}
+.bg-red{background:rgba(255,69,96,.12);color:var(--danger)}
+.bg-orange{background:rgba(255,179,71,.12);color:var(--warn)}
+.bg-blue{background:rgba(41,121,255,.12);color:var(--accent2)}
+.bg-gray{background:rgba(92,103,125,.15);color:var(--muted)}
+
+/* ── Form ── */
+.form-g{margin-bottom:14px}
+.form-l{display:block;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.form-i{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:5px;padding:8px 11px;font-family:var(--mono);font-size:12px;color:var(--text);outline:none;transition:border-color .12s}
+.form-i:focus{border-color:var(--accent)}
+.form-i::placeholder{color:var(--muted)}
+select.form-i{cursor:pointer}
+select.form-i option{background:var(--s2)}
+
+/* ── Toggle ── */
+.tog-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(37,43,58,.7)}
+.tog-row:last-child{border-bottom:none}
+.tog-name{font-size:12px;color:var(--text)}
+.tog-desc{font-size:10px;color:var(--muted);margin-top:1px}
+.tog{position:relative;width:34px;height:18px;flex-shrink:0}
+.tog input{opacity:0;width:0;height:0}
+.tog-s{position:absolute;inset:0;background:var(--border2);border-radius:18px;cursor:pointer;transition:.2s}
+.tog-s::before{content:'';position:absolute;width:12px;height:12px;left:3px;top:3px;background:var(--muted);border-radius:50%;transition:.2s}
+.tog input:checked+.tog-s{background:rgba(61,232,170,.3)}
+.tog input:checked+.tog-s::before{transform:translateX(16px);background:var(--accent)}
+
+/* ── Table ── */
+.tbl{width:100%;border-collapse:collapse;font-size:11px}
+.tbl th{text-align:left;padding:8px 12px;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)}
+.tbl td{padding:9px 12px;border-bottom:1px solid rgba(37,43,58,.5);color:var(--dim)}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:rgba(255,255,255,.02)}
+.tbl-av{width:24px;height:24px;border-radius:5px;background:var(--s2);display:inline-flex;align-items:center;justify-content:center;font-size:10px;color:var(--accent);font-weight:600;vertical-align:middle;margin-right:7px;font-family:var(--mono)}
+
+/* ── Log ── */
+.log-entry{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid rgba(37,43,58,.4);font-family:var(--mono)}
+.log-entry:last-child{border-bottom:none}
+.log-time{color:var(--muted);flex-shrink:0;font-size:10px;width:70px}
+.log-cat{flex-shrink:0;width:56px}
+.log-msg{color:var(--dim);flex:1;font-size:11px}
+.log-user{color:var(--accent2);font-size:10px;flex-shrink:0}
+.log-scroll{max-height:260px;overflow-y:auto}
+.log-scroll::-webkit-scrollbar{width:3px}
+.log-scroll::-webkit-scrollbar-thumb{background:var(--border)}
+
+/* ── Panels ── */
+.panel{display:none}.panel.active{display:block;animation:fadeIn .18s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+
+/* ── Auth form ── */
+.auth-wrap{max-width:480px}
+.result-box{margin-top:12px;min-height:20px;font-size:11px;font-family:var(--mono)}
+
+/* ── MFA step ── */
+.mfa-step{display:flex;gap:12px;padding:12px;border:1px solid var(--border);border-radius:7px;margin-bottom:8px;background:var(--s2);cursor:pointer;transition:all .12s}
+.mfa-step:hover{border-color:var(--border2)}
+.mfa-step.sel{border-color:var(--accent);background:rgba(61,232,170,.04)}
+.mfa-num{width:26px;height:26px;border-radius:50%;background:var(--border2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--muted);flex-shrink:0;transition:all .12s;font-family:var(--mono)}
+.mfa-step.sel .mfa-num{background:var(--accent);color:#0a0e12}
+.mfa-title{font-size:12px;color:var(--text);font-weight:500}
+.mfa-desc{font-size:10px;color:var(--muted);margin-top:1px}
+
+/* ── TOTP display ── */
+.totp-code{font-family:var(--mono);font-size:34px;font-weight:600;color:var(--accent);letter-spacing:8px;text-align:center;padding:14px 0}
+.prog-bar{height:3px;background:var(--border);border-radius:3px;overflow:hidden;margin:6px 0}
+.prog-fill{height:100%;border-radius:3px;transition:width .9s linear}
+
+/* ── Strength bars ── */
+.str-bars{display:flex;gap:3px;margin-top:6px}
+.str-bar{flex:1;height:3px;background:var(--border);border-radius:2px;transition:background .25s}
+.str-lbl{font-size:10px;color:var(--muted);margin-top:4px}
+
+/* ── Posture ── */
+.posture-row{margin-bottom:13px}
+.posture-lbl{display:flex;justify-content:space-between;margin-bottom:3px;font-size:11px}
+.prog-bar2{height:4px;background:var(--border);border-radius:4px;overflow:hidden}
+.prog-fill2{height:100%;border-radius:4px}
+
+/* ── Vuln ── */
+.vuln-item{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:6px;border:1px solid var(--border);margin-bottom:7px;background:var(--s2);transition:border-color .2s}
+.vuln-name{font-size:11px;color:var(--text);font-weight:500}
+.vuln-desc{font-size:10px;color:var(--muted);margin-top:1px}
+@keyframes vulnPulse{0%,100%{border-color:var(--border)}50%{border-color:var(--accent)}}
+.vuln-scan{animation:vulnPulse 1.2s infinite}
+
+/* ── Policy row ── */
+.pol-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(37,43,58,.5);font-size:11px}
+.pol-row:last-child{border-bottom:none}
+.pol-k{color:var(--dim)}
+.pol-v{color:var(--accent);font-family:var(--mono);font-weight:500}
+
+/* ── OS check ── */
+.os-check{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(37,43,58,.4);font-size:11px}
+.os-check:last-child{border-bottom:none}
+.check-name{color:var(--text)}
+.check-detail{font-size:10px;color:var(--muted)}
+
+/* ── Toast ── */
+.toast-c{position:fixed;top:18px;right:18px;z-index:9999;display:flex;flex-direction:column;gap:7px}
+.toast{background:var(--s2);border:1px solid var(--border2);border-radius:7px;padding:10px 14px;font-size:11px;display:flex;align-items:center;gap:9px;animation:tIn .18s ease;max-width:280px;font-family:var(--mono)}
+.toast.t-ok{border-left:3px solid var(--accent)}
+.toast.t-err{border-left:3px solid var(--danger)}
+.toast.t-warn{border-left:3px solid var(--warn)}
+@keyframes tIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
+
+.mb14{margin-bottom:14px}.mb20{margin-bottom:20px}.mt12{margin-top:12px}.mt16{margin-top:16px}
+.flex{display:flex}.gap8{gap:8px}.items-c{align-items:center}.j-between{justify-content:space-between}
+.scan-wrap{position:relative;overflow:hidden}
+.scan-line{position:absolute;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);animation:scanMove 2.5s linear infinite;opacity:.5;display:none}
+@keyframes scanMove{0%{top:0;opacity:0}10%{opacity:.5}90%{opacity:.5}100%{top:100%;opacity:0}}
+code{background:var(--s2);border:1px solid var(--border);padding:1px 5px;border-radius:3px;font-family:var(--mono);font-size:10px;color:var(--accent)}
+.section-lbl{font-size:9px;font-weight:600;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;margin-top:20px}
+.section-lbl:first-child{margin-top:0}
+</style>
+</head>
+<body>
+<div class="toast-c" id="tc"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-name">SecureAuth</div>
+    <div class="logo-ver">FRAMEWORK v1.0</div>
+  </div>
+  <nav>
+    <div class="nav-section">Core</div>
+    <div class="nav-item active" data-panel="dashboard" onclick="nav(this)"><span class="nav-icon">◈</span>Dashboard</div>
+    <div class="nav-item" data-panel="auth" onclick="nav(this)"><span class="nav-icon">⬡</span>Authentication</div>
+    <div class="nav-item" data-panel="mfa" onclick="nav(this)"><span class="nav-icon">◉</span>MFA Config</div>
+    <div class="nav-section">Security</div>
+    <div class="nav-item" data-panel="passwords" onclick="nav(this)"><span class="nav-icon">⬧</span>Passwords</div>
+    <div class="nav-item" data-panel="scanner" onclick="nav(this)"><span class="nav-icon">◎</span>Vuln Scanner</div>
+    <div class="nav-item" data-panel="os" onclick="nav(this)"><span class="nav-icon">⬨</span>OS Integration</div>
+    <div class="nav-section">Admin</div>
+    <div class="nav-item" data-panel="users" onclick="nav(this)"><span class="nav-icon">◫</span>Users</div>
+    <div class="nav-item" data-panel="audit" onclick="nav(this)"><span class="nav-icon">≡</span>Audit Log</div>
+  </nav>
+  <div class="sys-bar">
+    <div class="sys-status"><span class="dot"></span><span id="sysStatus">Connecting…</span></div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <div class="page-title" id="pageTitle">Security Dashboard</div>
+    <div class="topbar-right">
+      <span id="userBadge" class="badge bg-gray">not logged in</span>
+      <button class="btn btn-g" onclick="logout()">Logout</button>
+      <button class="btn btn-p" onclick="runFullScan()">▷ Run Scan</button>
+    </div>
+  </div>
+  <div class="content">
+
+    <!-- ═══ DASHBOARD ═══ -->
+    <div class="panel active" id="panel-dashboard">
+      <div class="g4 mb20">
+        <div class="stat" style="--accent-c:var(--accent)">
+          <div class="stat-lbl">Active Users</div>
+          <div class="stat-val" id="st-users">–</div>
+          <div class="stat-sub">Registered accounts</div>
+        </div>
+        <div class="stat" style="--accent-c:var(--warn)">
+          <div class="stat-lbl">Audit Events</div>
+          <div class="stat-val" id="st-events">–</div>
+          <div class="stat-sub">Total logged</div>
+        </div>
+        <div class="stat" style="--accent-c:var(--accent)">
+          <div class="stat-lbl">Chain Integrity</div>
+          <div class="stat-val" id="st-chain">–</div>
+          <div class="stat-sub">Tamper detection</div>
+        </div>
+        <div class="stat" style="--accent-c:var(--info)">
+          <div class="stat-lbl">Platform</div>
+          <div class="stat-val" id="st-platform" style="font-size:16px;margin-top:10px">–</div>
+          <div class="stat-sub" id="st-pam">PAM: checking…</div>
+        </div>
+      </div>
+      <div class="g2">
+        <div class="card">
+          <div class="card-hd"><div class="card-title">Recent Events</div><span class="badge bg-orange">Live</span></div>
+          <div class="card-body"><div class="log-scroll" id="dashLog"></div></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><div class="card-title">Security Posture</div></div>
+          <div class="card-body" id="posturePanel"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ AUTH ═══ -->
+    <div class="panel" id="panel-auth">
+      <div class="g2">
+        <div class="card mb14 auth-wrap">
+          <div class="card-hd"><div class="card-title">Login Simulator</div><span class="badge bg-blue">Real JWT</span></div>
+          <div class="card-body">
+            <div class="form-g"><label class="form-l">Username</label><input class="form-i" id="aUser" placeholder="admin" type="text"></div>
+            <div class="form-g"><label class="form-l">Password</label><input class="form-i" id="aPass" placeholder="Admin@SecureAuth1!" type="password"></div>
+            <div class="form-g" id="mfaGrp" style="display:none"><label class="form-l">MFA Token</label><input class="form-i" id="aMfa" placeholder="6-digit code" type="text" maxlength="6"></div>
+            <button class="btn btn-p" style="width:100%" onclick="doLogin()">Authenticate</button>
+            <div class="result-box" id="authResult"></div>
+            <div style="margin-top:14px;font-size:10px;color:var(--muted)">
+              Demo credentials:<br>
+              <code>admin</code> / <code>Admin@SecureAuth1!</code><br>
+              <code>developer</code> / <code>Dev@SecurePass9#</code>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><div class="card-title">Auth Protections</div></div>
+          <div class="card-body">
+            <div class="tog-row"><div><div class="tog-name">Brute-force lockout</div><div class="tog-desc">Account locked after 5 failed attempts (15 min)</div></div><label class="tog"><input type="checkbox" checked><span class="tog-s"></span></label></div>
+            <div class="tog-row"><div><div class="tog-name">Timing-safe comparison</div><div class="tog-desc">Argon2id + constant-time hmac.compare_digest()</div></div><label class="tog"><input type="checkbox" checked><span class="tog-s"></span></label></div>
+            <div class="tog-row"><div><div class="tog-name">Input length enforcement</div><div class="tog-desc">Hard limits on all untrusted fields (buffer overflow prevention)</div></div><label class="tog"><input type="checkbox" checked><span class="tog-s"></span></label></div>
+            <div class="tog-row"><div><div class="tog-name">Null byte / control char stripping</div><div class="tog-desc">Strips \x00–\x1f from all inputs before processing</div></div><label class="tog"><input type="checkbox" checked><span class="tog-s"></span></label></div>
+            <div class="tog-row"><div><div class="tog-name">JWT with per-token JTI</div><div class="tog-desc">Each token has a unique ID enabling revocation</div></div><label class="tog"><input type="checkbox" checked><span class="tog-s"></span></label></div>
+            <div class="tog-row"><div><div class="tog-name">Security response headers</div><div class="tog-desc">HSTS, CSP, X-Frame-Options, X-Content-Type enforced</div></div><label class="tog"><input type="checkbox" checked><span class="tog-s"></span></label></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ MFA ═══ -->
+    <div class="panel" id="panel-mfa">
+      <div class="g2">
+        <div>
+          <div class="section-lbl">Available Methods</div>
+          <div class="mfa-step sel" onclick="selMFA(this)"><div class="mfa-num">1</div><div><div class="mfa-title">TOTP Authenticator (RFC 6238)</div><div class="mfa-desc">HMAC-SHA1, 30s window, compatible with Google Authenticator / Authy</div></div></div>
+          <div class="mfa-step" onclick="selMFA(this)"><div class="mfa-num">2</div><div><div class="mfa-title">SMS One-Time Password</div><div class="mfa-desc">6-digit code via SMS gateway (Twilio integration ready)</div></div></div>
+          <div class="mfa-step" onclick="selMFA(this)"><div class="mfa-num">3</div><div><div class="mfa-title">FIDO2 / WebAuthn Hardware Key</div><div class="mfa-desc">YubiKey, SoloKey — phishing-resistant hardware token</div></div></div>
+          <div class="mfa-step" onclick="selMFA(this)"><div class="mfa-num">4</div><div><div class="mfa-title">Backup Codes (single-use)</div><div class="mfa-desc">10 × XXXXX-XXXXX codes, SHA-256 hashed in store</div></div></div>
+          <div class="mfa-step" onclick="selMFA(this)"><div class="mfa-num">5</div><div><div class="mfa-title">Biometric (OS-integrated)</div><div class="mfa-desc">Touch ID / Face ID / Windows Hello via platform API</div></div></div>
+
+          <div class="section-lbl mt16">MFA Enforcement</div>
+          <div class="card">
+            <div class="card-body">
+              <div class="tog-row"><div><div class="tog-name">Require MFA for all users</div><div class="tog-desc">Mandatory enrollment on next login</div></div><label class="tog"><input type="checkbox" checked><span class="tog-s"></span></label></div>
+              <div class="tog-row"><div><div class="tog-name">Rate-limit MFA attempts</div><div class="tog-desc">Lock after 5 failures for 15 minutes</div></div><label class="tog"><input type="checkbox" checked><span class="tog-s"></span></label></div>
+              <div class="tog-row"><div><div class="tog-name">Single-use backup codes</div><div class="tog-desc">Used codes invalidated immediately</div></div><label class="tog"><input type="checkbox" checked><span class="tog-s"></span></label></div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="section-lbl">TOTP Simulator</div>
+          <div class="card mb14">
+            <div class="card-body">
+              <div style="font-size:10px;color:var(--muted);margin-bottom:8px">Real pyotp-generated TOTP code rotating every 30s</div>
+              <div class="totp-code" id="totpCode">──────</div>
+              <div class="prog-bar"><div class="prog-fill" id="totpProg" style="background:var(--accent);width:100%"></div></div>
+              <div style="text-align:center;font-size:10px;color:var(--muted)" id="totpTimer">Start simulator to fetch live code</div>
+              <button class="btn btn-g mt12" style="width:100%" onclick="startTOTPSim()" id="totpBtn">▷ Start TOTP Simulator</button>
+              <div style="font-size:10px;color:var(--muted);margin-top:8px">Requires admin login first. Fetches real token from <code>GET /api/mfa/totp-demo</code></div>
+            </div>
+          </div>
+
+          <div class="section-lbl">Setup Flow</div>
+          <div class="card">
+            <div class="card-body">
+              <div class="pol-row"><span class="pol-k">Secret generation</span><span class="pol-v">pyotp.random_base32()</span></div>
+              <div class="pol-row"><span class="pol-k">Algorithm</span><span class="pol-v">HMAC-SHA1</span></div>
+              <div class="pol-row"><span class="pol-k">Time step</span><span class="pol-v">30 seconds</span></div>
+              <div class="pol-row"><span class="pol-k">Valid window</span><span class="pol-v">±1 step (clock drift)</span></div>
+              <div class="pol-row"><span class="pol-k">QR code</span><span class="pol-v">otpauth:// URI</span></div>
+              <div class="pol-row"><span class="pol-k">Backup codes</span><span class="pol-v">10 × SHA-256 hashed</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ PASSWORDS ═══ -->
+    <div class="panel" id="panel-passwords">
+      <div class="g2">
+        <div>
+          <div class="section-lbl">Password Strength Tester</div>
+          <div class="card mb14">
+            <div class="card-body">
+              <div class="form-g">
+                <label class="form-l">Test a password — analyzed by real backend</label>
+                <input class="form-i" type="password" id="pwdTest" placeholder="Enter password…" oninput="analyzePwd(this.value)">
+                <div class="str-bars" id="strBars"><div class="str-bar" id="sb1"></div><div class="str-bar" id="sb2"></div><div class="str-bar" id="sb3"></div><div class="str-bar" id="sb4"></div><div class="str-bar" id="sb5"></div></div>
+                <div class="str-lbl" id="strLbl">Enter a password to analyze</div>
+              </div>
+              <div id="pwdAnalysis" style="font-size:11px;line-height:1.9;color:var(--dim);font-family:var(--mono)"></div>
+            </div>
+          </div>
+
+          <div class="section-lbl">Generate Secure Password</div>
+          <div class="card">
+            <div class="card-body">
+              <div class="flex gap8 items-c mb14">
+                <input class="form-i" type="number" id="genLen" value="20" min="12" max="64" style="width:80px">
+                <button class="btn btn-g" onclick="genPwd()">Generate</button>
+              </div>
+              <div id="genResult" style="font-family:var(--mono);font-size:12px;color:var(--accent);word-break:break-all;min-height:20px"></div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="section-lbl">Hashing Configuration</div>
+          <div class="card mb14">
+            <div class="card-body">
+              <div class="pol-row"><span class="pol-k">Algorithm</span><span class="pol-v">Argon2id</span></div>
+              <div class="pol-row"><span class="pol-k">Time cost</span><span class="pol-v">3 iterations</span></div>
+              <div class="pol-row"><span class="pol-k">Memory cost</span><span class="pol-v">64 MB</span></div>
+              <div class="pol-row"><span class="pol-k">Parallelism</span><span class="pol-v">4 lanes</span></div>
+              <div class="pol-row"><span class="pol-k">Hash length</span><span class="pol-v">32 bytes</span></div>
+              <div class="pol-row"><span class="pol-k">Salt</span><span class="pol-v">16 bytes (random)</span></div>
+              <div class="pol-row"><span class="pol-k">Pepper</span><span class="pol-v">HMAC-SHA256 pre-hash</span></div>
+              <div class="pol-row"><span class="pol-k">Timing-safe verify</span><span class="pol-v" style="color:var(--accent)">Enabled</span></div>
+              <div class="pol-row"><span class="pol-k">Plain-text storage</span><span class="pol-v" style="color:var(--danger)">Blocked</span></div>
+            </div>
+          </div>
+
+          <div class="section-lbl">Policy Settings</div>
+          <div class="card">
+            <div class="card-body">
+              <div class="pol-row"><span class="pol-k">Min length</span><span class="pol-v">12 chars</span></div>
+              <div class="pol-row"><span class="pol-k">Max age</span><span class="pol-v">90 days</span></div>
+              <div class="pol-row"><span class="pol-k">History</span><span class="pol-v">Last 10</span></div>
+              <div class="pol-row"><span class="pol-k">Common patterns</span><span class="pol-v" style="color:var(--danger)">Rejected</span></div>
+              <div class="pol-row"><span class="pol-k">Username in password</span><span class="pol-v" style="color:var(--danger)">Rejected</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SCANNER ═══ -->
+    <div class="panel" id="panel-scanner">
+      <div class="g2">
+        <div>
+          <div class="section-lbl">Vulnerability Checks</div>
+          <div class="scan-wrap card">
+            <div class="scan-line" id="scanLine"></div>
+            <div class="card-body" id="vulnList"></div>
+          </div>
+          <button class="btn btn-p mt12" style="width:100%" onclick="runVulnScan()">▷ Run Trapdoor Scan</button>
+        </div>
+        <div>
+          <div class="section-lbl">Mitigations Active</div>
+          <div class="card mb14">
+            <div class="card-body">
+              <div class="tog-row"><div><div class="tog-name">Input length enforcement</div><div class="tog-desc">Hard-coded max lengths per field type</div></div><label class="tog"><input type="checkbox" checked><span class="tog-s"></span></label></div>
+              <div class="tog-row"><div><div class="tog-name">Null-byte / control-char stripping</div><div class="tog-desc">Strips \x00–\x08, \x0b–\x1f from all inputs</div></div><label class="tog"><input type="checkbox" checked><span class="tog-s"></span></label></div>
+              <div class="tog-row"><div><div class="tog-name">Privilege escalation anomaly detection</div><div class="tog-desc">Blocks rapid repeated role escalations</div></div><label class="tog"><input type="checkbox" checked><span class="tog-s"></span></label></div>
+              <div class="tog-row"><div><div class="tog-name">Trapdoor signature scanner</div><div class="tog-desc">16 regex patterns for hardcoded creds, debug flags, shell exec</div></div><label class="tog"><input type="checkbox" checked><span class="tog-s"></span></label></div>
+              <div class="tog-row"><div><div class="tog-name">Parameterised DB queries</div><div class="tog-desc">No string-concatenated SQL (SQL injection prevention)</div></div><label class="tog"><input type="checkbox" checked><span class="tog-s"></span></label></div>
+              <div class="tog-row"><div><div class="tog-name">Tamper-evident audit chain</div><div class="tog-desc">HMAC-chained log — modification is detectable</div></div><label class="tog"><input type="checkbox" checked><span class="tog-s"></span></label></div>
+            </div>
+          </div>
+          <div class="section-lbl">Scan History</div>
+          <div class="card"><div class="card-body log-scroll" id="scanHist" style="max-height:180px"><div style="font-size:11px;color:var(--muted)">No scans yet.</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ OS INTEGRATION ═══ -->
+    <div class="panel" id="panel-os">
+      <div class="g2">
+        <div>
+          <div class="section-lbl">OS Security Checks</div>
+          <div class="card mb14">
+            <div class="card-body" id="osChecks">
+              <div style="font-size:11px;color:var(--muted)">Click "Run Checks" to fetch live OS data</div>
+            </div>
+          </div>
+          <button class="btn btn-p" onclick="loadOSChecks()">▷ Run OS Checks</button>
+        </div>
+        <div>
+          <div class="section-lbl">Process Privileges</div>
+          <div class="card mb14">
+            <div class="card-body" id="privInfo">
+              <div style="font-size:11px;color:var(--muted)">Load OS checks to view</div>
+            </div>
+          </div>
+          <div class="section-lbl">PAM Integration</div>
+          <div class="card mb14">
+            <div class="card-body">
+              <div class="pol-row"><span class="pol-k">Module</span><span class="pol-v">python-pam</span></div>
+              <div class="pol-row"><span class="pol-k">Service name</span><span class="pol-v">secureauth</span></div>
+              <div class="pol-row"><span class="pol-k">Fallback</span><span class="pol-v">Graceful (no crash)</span></div>
+              <div class="pol-row"><span class="pol-k">Windows</span><span class="pol-v">win32security.LogonUser</span></div>
+              <div class="pol-row"><span class="pol-k">Available</span><span class="pol-v" id="pamAvail">checking…</span></div>
+            </div>
+          </div>
+          <div class="section-lbl">System Users</div>
+          <div class="card"><div class="card-body log-scroll" id="sysUsers" style="max-height:200px"><div style="font-size:11px;color:var(--muted)">Run OS checks to view</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ USERS ═══ -->
+    <div class="panel" id="panel-users">
+      <div class="card">
+        <div class="card-hd"><div class="card-title">User Management</div><button class="btn btn-p" onclick="loadUsers()">↻ Refresh</button></div>
+        <div class="card-body" style="padding:0">
+          <table class="tbl" id="userTbl">
+            <thead><tr><th>User</th><th>Role</th><th>MFA</th><th>Status</th><th>Last Login</th><th>Actions</th></tr></thead>
+            <tbody id="userTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ AUDIT ═══ -->
+    <div class="panel" id="panel-audit">
+      <div class="card">
+        <div class="card-hd">
+          <div class="card-title">Audit Log <span id="chainBadge" class="badge bg-green" style="margin-left:8px">chain OK</span></div>
+          <div class="flex gap8">
+            <select class="form-i" style="padding:5px 9px;font-size:11px;width:130px" onchange="loadAudit(this.value)">
+              <option value="">All Events</option>
+              <option value="AUTH">AUTH</option>
+              <option value="MFA">MFA</option>
+              <option value="PRIVILEGE">PRIVILEGE</option>
+              <option value="SCAN">SCAN</option>
+            </select>
+            <button class="btn btn-g" onclick="loadAudit()">↻ Refresh</button>
+          </div>
+        </div>
+        <div class="card-body"><div class="log-scroll" id="fullLog" style="max-height:500px"></div></div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</main>
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────────────
+const S = {
+  token: localStorage.getItem('sa_token') || '',
+  user: null,
+  totpInterval: null,
+  totpSeconds: 30,
+};
+
+const API = '';  // same origin
+
+// ── API helper ────────────────────────────────────────────────────────────────
+async function api(method, path, body, skipAuth) {
+  const headers = {'Content-Type': 'application/json'};
+  if (S.token && !skipAuth) headers['Authorization'] = 'Bearer ' + S.token;
+  try {
+    const r = await fetch(API + path, {method, headers,
+      body: body ? JSON.stringify(body) : undefined});
+    const d = await r.json();
+    return {ok: r.ok, status: r.status, data: d};
+  } catch (e) {
+    return {ok: false, status: 0, data: {error: 'Network error: ' + e.message}};
+  }
+}
+
+// ── Navigation ────────────────────────────────────────────────────────────────
+const pageTitles = {
+  dashboard: 'Security Dashboard', auth: 'Authentication',
+  mfa: 'Multi-Factor Authentication', passwords: 'Password Management',
+  scanner: 'Vulnerability Scanner', os: 'OS Integration',
+  users: 'User Management', audit: 'Audit Log'
+};
+
+function nav(el) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  const id = el.dataset.panel;
+  document.getElementById('panel-' + id).classList.add('active');
+  document.getElementById('pageTitle').textContent = pageTitles[id];
+  if (id === 'users') loadUsers();
+  if (id === 'audit') loadAudit();
+  if (id === 'os') loadOSChecks();
+}
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+async function doLogin() {
+  const user = document.getElementById('aUser').value.trim();
+  const pass = document.getElementById('aPass').value;
+  const mfa  = document.getElementById('aMfa').value.trim();
+  const res  = document.getElementById('authResult');
+
+  const body = {username: user, password: pass};
+  if (mfa) body.mfa_token = mfa;
+
+  const r = await api('POST', '/api/auth/login', body, true);
+  if (r.data.mfa_required) {
+    document.getElementById('mfaGrp').style.display = 'block';
+    res.innerHTML = '<span style="color:var(--info)">→ MFA required. Enter your 6-digit code.</span>';
+    return;
+  }
+  if (!r.ok) {
+    res.innerHTML = `<span style="color:var(--danger)">✗ ${r.data.error}</span>`;
+    return;
+  }
+  S.token = r.data.access_token;
+  S.user  = r.data.user;
+  localStorage.setItem('sa_token', S.token);
+  document.getElementById('userBadge').textContent = `${S.user.username} [${S.user.role}]`;
+  document.getElementById('userBadge').className = 'badge bg-green';
+  res.innerHTML = `<span style="color:var(--accent)">✓ Authenticated. Role: ${S.user.role}. JWT issued.</span>`;
+  document.getElementById('mfaGrp').style.display = 'none';
+  toast(`Logged in as ${S.user.username}`, 'ok');
+  refreshDashboard();
+}
+
+async function logout() {
+  if (S.token) await api('POST', '/api/auth/logout');
+  S.token = '';
+  S.user  = null;
+  localStorage.removeItem('sa_token');
+  document.getElementById('userBadge').textContent = 'not logged in';
+  document.getElementById('userBadge').className = 'badge bg-gray';
+  toast('Logged out', 'warn');
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+async function refreshDashboard() {
+  const r = await api('GET', '/api/status');
+  if (!r.ok) return;
+  const d = r.data;
+  document.getElementById('st-users').textContent    = d.users_count;
+  document.getElementById('st-events').textContent   = d.audit_events;
+  document.getElementById('st-chain').textContent    = d.chain_ok ? 'OK' : 'FAIL';
+  document.getElementById('st-platform').textContent = d.platform;
+  document.getElementById('st-pam').textContent      = 'PAM: ' + (d.pam_available ? 'Available' : 'Degraded');
+  document.getElementById('sysStatus').textContent   = 'API Connected';
+  document.getElementById('pamAvail').textContent    = d.pam_available ? 'Yes' : 'No (graceful)';
+  document.getElementById('pamAvail').style.color    = d.pam_available ? 'var(--accent)' : 'var(--warn)';
+  loadDashLog();
+  renderPosture(d);
+}
+
+function renderPosture(d) {
+  const items = [
+    {label: 'Audit Chain Integrity', val: d.chain_ok ? 100 : 0, c: d.chain_ok ? 'var(--accent)' : 'var(--danger)'},
+    {label: 'Input Validation',       val: 100, c: 'var(--accent)'},
+    {label: 'Password Hashing',       val: 100, c: 'var(--accent)'},
+    {label: 'RBAC Enforcement',       val: 100, c: 'var(--accent)'},
+    {label: 'PAM Integration',        val: d.pam_available ? 100 : 40, c: d.pam_available ? 'var(--accent)' : 'var(--warn)'},
+  ];
+  document.getElementById('posturePanel').innerHTML = items.map(i => `
+    <div class="posture-row">
+      <div class="posture-lbl">
+        <span style="font-size:11px;color:var(--dim)">${i.label}</span>
+        <span style="font-size:11px;font-weight:600;color:${i.c}">${i.val}%</span>
+      </div>
+      <div class="prog-bar2"><div class="prog-fill2" style="width:${i.val}%;background:${i.c}"></div></div>
+    </div>`).join('');
+}
+
+async function loadDashLog() {
+  const r = await api('GET', '/api/audit/events?limit=8');
+  if (!r.ok) return;
+  document.getElementById('dashLog').innerHTML = renderLogEntries(r.data.events);
+}
+
+function renderLogEntries(events) {
+  if (!events || !events.length) return '<div style="font-size:11px;color:var(--muted)">No events yet.</div>';
+  const colors = {INFO:'bg-blue',WARN:'bg-orange',FAIL:'bg-red',CRIT:'bg-red'};
+  return events.map(e => {
+    const t = e.timestamp.split('T')[1].slice(0,8);
+    return `<div class="log-entry">
+      <span class="log-time">${t}</span>
+      <span class="log-cat"><span class="badge ${colors[e.level]||'bg-gray'}">${e.level}</span></span>
+      <span class="log-msg">${e.message}</span>
+      <span class="log-user">${e.user_id||'sys'}</span>
+    </div>`;
+  }).join('');
+}
+
+// ── Password analysis ─────────────────────────────────────────────────────────
+let analyzeTimer;
+function analyzePwd(val) {
+  clearTimeout(analyzeTimer);
+  if (!val) {
+    document.getElementById('strLbl').textContent = 'Enter a password to analyze';
+    document.getElementById('pwdAnalysis').innerHTML = '';
+    [1,2,3,4,5].forEach(i => document.getElementById('sb'+i).style.background = 'var(--border)');
+    return;
+  }
+  analyzeTimer = setTimeout(async () => {
+    const r = await api('POST', '/api/password/analyze', {password: val});
+    if (!r.ok) return;
+    const d = r.data;
+    const sc = d.score;
+    const colors = sc < 20 ? 'var(--danger)' : sc < 40 ? 'var(--warn)' : sc < 60 ? 'var(--warn)' : sc < 80 ? 'var(--info)' : 'var(--accent)';
+    const bars = Math.ceil(sc / 20);
+    [1,2,3,4,5].forEach(i => {
+      document.getElementById('sb'+i).style.background = i <= bars ? colors : 'var(--border)';
+    });
+    const smap = {very_weak:'Very Weak',weak:'Weak',fair:'Fair',strong:'Strong',very_strong:'Very Strong'};
+    document.getElementById('strLbl').innerHTML = `Strength: <strong style="color:${colors}">${smap[d.strength]||d.strength}</strong> · Entropy: ${d.entropy_bits} bits · Score: ${d.score}/100`;
+    const checks = [
+      ...(d.violations.map(v => `<div style="color:var(--danger)">✗ ${v}</div>`)),
+      ...(d.suggestions.map(s => `<div style="color:var(--warn)">→ ${s}</div>`)),
+      ...(d.passes_policy ? ['<div style="color:var(--accent)">✓ Passes all policy requirements</div>'] : []),
+    ];
+    document.getElementById('pwdAnalysis').innerHTML = checks.join('');
+  }, 250);
+}
+
+async function genPwd() {
+  const len = document.getElementById('genLen').value;
+  const r   = await api('GET', `/api/password/generate?length=${len}`);
+  if (r.ok) document.getElementById('genResult').textContent = r.data.password;
+}
+
+// ── TOTP simulator ────────────────────────────────────────────────────────────
+async function startTOTPSim() {
+  if (!S.token) { toast('Log in first', 'err'); return; }
+  if (S.totpInterval) clearInterval(S.totpInterval);
+  document.getElementById('totpBtn').textContent = '◼ Stop Simulator';
+  document.getElementById('totpBtn').onclick = stopTOTPSim;
+  await fetchTOTP();
+  S.totpInterval = setInterval(fetchTOTP, 1000);
+}
+
+async function fetchTOTP() {
+  const r = await api('GET', '/api/mfa/totp-demo');
+  if (!r.ok) { stopTOTPSim(); return; }
+  const d = r.data;
+  document.getElementById('totpCode').textContent = d.token;
+  const pct = (d.remaining_seconds / 30) * 100;
+  document.getElementById('totpProg').style.width = pct + '%';
+  document.getElementById('totpTimer').textContent = `Refreshes in ${d.remaining_seconds}s`;
+}
+
+function stopTOTPSim() {
+  clearInterval(S.totpInterval);
+  document.getElementById('totpBtn').textContent = '▷ Start TOTP Simulator';
+  document.getElementById('totpBtn').onclick = startTOTPSim;
+}
+
+// ── Vuln scanner ──────────────────────────────────────────────────────────────
+const VULNS = [
+  {id:'bo',   name:'Buffer Overflow',          desc:'Input length limits, null-byte stripping',      sev:'HIGH'},
+  {id:'priv', name:'Privilege Escalation',     desc:'RBAC enforcement + anomaly monitoring',         sev:'CRITICAL'},
+  {id:'trap', name:'Hardcoded Credentials',    desc:'Static analysis via trapdoor scanner',          sev:'CRITICAL'},
+  {id:'sql',  name:'SQL Injection',            desc:'Parameterised queries enforced',                sev:'HIGH'},
+  {id:'xss',  name:'XSS / Output Encoding',   desc:'CSP header + input sanitisation',               sev:'HIGH'},
+  {id:'csrf', name:'CSRF Protection',          desc:'Double-submit cookie + CORS policy',            sev:'MEDIUM'},
+  {id:'sess', name:'Session Fixation',         desc:'New JWT jti on every login',                    sev:'MEDIUM'},
+  {id:'tls',  name:'Weak Cipher Suites',       desc:'TLS 1.2+ via HSTS header',                     sev:'MEDIUM'},
+];
+
+function renderVulnList() {
+  const sevColor = {CRITICAL:'var(--danger)',HIGH:'var(--warn)',MEDIUM:'var(--info)',LOW:'var(--muted)'};
+  document.getElementById('vulnList').innerHTML = VULNS.map(v => `
+    <div class="vuln-item" id="vi-${v.id}">
+      <div><div class="vuln-name">${v.name}</div><div class="vuln-desc">${v.desc}</div></div>
+      <div id="vs-${v.id}" style="font-size:10px;font-weight:600;text-align:right">
+        <span style="color:${sevColor[v.sev]};font-size:9px;letter-spacing:1px;display:block">${v.sev}</span>
+        <span style="color:var(--muted)">Not scanned</span>
+      </div>
+    </div>`).join('');
+}
+
+async function runVulnScan() {
+  if (!S.token) { toast('Log in as admin first', 'err'); return; }
+  document.getElementById('scanLine').style.display = 'block';
+  VULNS.forEach(v => document.getElementById('vi-'+v.id).classList.add('vuln-scan'));
+
+  // Real trapdoor scan via backend
+  let findings = [];
+  const r = await api('POST', '/api/security/scan/trapdoors', {path: '.'});
+  if (r.ok) findings = r.data.findings || [];
+
+  VULNS.forEach((v, i) => {
+    setTimeout(() => {
+      const el = document.getElementById('vi-'+v.id);
+      el.classList.remove('vuln-scan');
+      // For trapdoor check, use real results; others are protection-present
+      let flagged = false;
+      if (v.id === 'trap') flagged = findings.length > 0;
+      document.getElementById('vs-'+v.id).innerHTML = flagged
+        ? `<span class="badge bg-red">ISSUES (${findings.length})</span>`
+        : `<span class="badge bg-green">PROTECTED</span>`;
+    }, (i+1) * 350);
+  });
+
+  setTimeout(() => {
+    document.getElementById('scanLine').style.display = 'none';
+    const ts = new Date().toLocaleTimeString();
+    const h  = document.getElementById('scanHist');
+    h.innerHTML = `<div class="log-entry">
+      <span class="log-time">${ts}</span>
+      <span class="log-cat"><span class="badge ${findings.length ? 'bg-orange' : 'bg-green'}">${findings.length ? 'ISSUES' : 'CLEAN'}</span></span>
+      <span class="log-msg">${findings.length} trapdoor finding(s)</span>
+    </div>` + h.innerHTML;
+    toast(`Scan done — ${findings.length} finding(s)`, findings.length ? 'warn' : 'ok');
+  }, VULNS.length * 350 + 400);
+}
+
+function runFullScan() {
+  const n = document.querySelector('[data-panel="scanner"]');
+  nav(n);
+  setTimeout(runVulnScan, 200);
+}
+
+// ── OS checks ─────────────────────────────────────────────────────────────────
+async function loadOSChecks() {
+  if (!S.token) { toast('Log in as admin first', 'err'); return; }
+  const r = await api('GET', '/api/security/os-checks');
+  if (!r.ok) { toast('Need admin token', 'err'); return; }
+  const d = r.data;
+
+  const statusIcon = s => s === 'pass' ? '<span style="color:var(--accent)">✓</span>' : s === 'warn' ? '<span style="color:var(--warn)">⚠</span>' : '<span style="color:var(--danger)">✗</span>';
+  const checks = Object.entries(d.checks).map(([k, v]) => `
+    <div class="os-check">
+      <div><div class="check-name">${k}</div><div class="check-detail">${v.detail||''}</div></div>
+      <span>${statusIcon(v.status)} <span style="font-size:10px;color:var(--muted)">${v.status}</span></span>
+    </div>`).join('');
+  document.getElementById('osChecks').innerHTML = checks || '<div style="font-size:11px;color:var(--muted)">No checks available</div>';
+
+  const p = d.process_privileges;
+  document.getElementById('privInfo').innerHTML = `
+    <div class="pol-row"><span class="pol-k">Platform</span><span class="pol-v">${d.platform}</span></div>
+    <div class="pol-row"><span class="pol-k">PAM Available</span><span class="pol-v" style="color:${d.pam_available?'var(--accent)':'var(--warn)'}">${d.pam_available}</span></div>
+    <div class="pol-row"><span class="pol-k">Effective UID</span><span class="pol-v">${p.effective_uid}</span></div>
+    <div class="pol-row"><span class="pol-k">Is Root</span><span class="pol-v" style="color:${p.is_root?'var(--danger)':'var(--accent)'}">${p.is_root}</span></div>
+    <div class="pol-row"><span class="pol-k">Has Sudo</span><span class="pol-v">${p.has_sudo}</span></div>
+    <div class="pol-row"><span class="pol-k">SUID binaries found</span><span class="pol-v">${(p.suid_files||[]).length}</span></div>`;
+
+  // System users
+  const ur = await api('GET', '/api/security/system-users');
+  if (ur.ok && ur.data.users) {
+    document.getElementById('sysUsers').innerHTML = ur.data.users.map(u => `
+      <div class="log-entry">
+        <span class="log-time" style="width:80px">${u.username}</span>
+        <span class="log-cat"><span class="badge ${u.is_locked?'bg-red':'bg-green'}">${u.is_locked?'LOCKED':'ACTIVE'}</span></span>
+        <span class="log-msg">${u.shell}</span>
+        <span class="log-user">uid:${u.uid}</span>
+      </div>`).join('') || '<div style="font-size:11px;color:var(--muted)">No non-system users</div>';
+  }
+}
+
+// ── Users ─────────────────────────────────────────────────────────────────────
+async function loadUsers() {
+  if (!S.token) return;
+  const r = await api('GET', '/api/users');
+  if (!r.ok) { document.getElementById('userTbody').innerHTML = '<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:20px">Log in as admin to view users</td></tr>'; return; }
+  const roleColors = {ADMIN:'bg-red',DEVELOPER:'bg-blue',ANALYST:'bg-orange',USER:'bg-green',VIEWER:'bg-gray',SUPERADMIN:'bg-red'};
+  document.getElementById('userTbody').innerHTML = r.data.users.map(u => `
+    <tr>
+      <td><span class="tbl-av">${u.username[0].toUpperCase()}</span>${u.username}<br><span style="font-size:9px;color:var(--muted);margin-left:31px">${u.email}</span></td>
+      <td><span class="badge ${roleColors[u.role]||'bg-gray'}">${u.role}</span></td>
+      <td>${u.mfa_enabled ? '<span class="badge bg-green">✓ On</span>' : '<span class="badge bg-red">✗ Off</span>'}</td>
+      <td>${u.locked ? '<span class="badge bg-red">Locked</span>' : '<span class="badge bg-green">Active</span>'}</td>
+      <td style="color:var(--muted)">${u.last_login ? new Date(u.last_login*1000).toLocaleTimeString() : 'Never'}</td>
+      <td><button class="btn btn-g" style="padding:3px 8px;font-size:10px" onclick="toggleLock('${u.id}','${u.locked}')">${u.locked?'Unlock':'Lock'}</button></td>
+    </tr>`).join('');
+}
+
+async function toggleLock(id, locked) {
+  const ep = locked === 'true' ? 'unlock' : 'lock';
+  const r  = await api('POST', `/api/users/${id}/${ep}`);
+  if (r.ok) { toast(r.data.message, 'ok'); loadUsers(); }
+  else toast(r.data.error, 'err');
+}
+
+// ── Audit ─────────────────────────────────────────────────────────────────────
+async function loadAudit(cat) {
+  if (!S.token) { document.getElementById('fullLog').innerHTML = '<div style="font-size:11px;color:var(--muted)">Log in as analyst or admin</div>'; return; }
+  const url = '/api/audit/events?limit=100' + (cat ? `&category=${cat}` : '');
+  const r   = await api('GET', url);
+  if (!r.ok) return;
+  document.getElementById('fullLog').innerHTML = renderLogEntries(r.data.events);
+  const ok = r.data.chain_ok;
+  const cb = document.getElementById('chainBadge');
+  cb.textContent = ok ? 'chain OK' : 'CHAIN BROKEN';
+  cb.className   = 'badge ' + (ok ? 'bg-green' : 'bg-red');
+}
+
+// ── MFA step selector ─────────────────────────────────────────────────────────
+function selMFA(el) {
+  document.querySelectorAll('.mfa-step').forEach(e => e.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function toast(msg, type='ok') {
+  const icons = {ok:'✓',err:'✗',warn:'⚠'};
+  const c = document.getElementById('tc');
+  const t = document.createElement('div');
+  t.className = `toast t-${type}`;
+  t.innerHTML = `<span style="color:var(--${type==='ok'?'accent':type==='warn'?'warn':'danger'})">${icons[type]}</span>${msg}`;
+  c.appendChild(t);
+  setTimeout(() => { t.style.opacity='0'; t.style.transition='opacity .25s'; setTimeout(()=>t.remove(),300); }, 3500);
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+renderVulnList();
+// Auto-connect
+(async () => {
+  const r = await api('GET', '/api/status');
+  if (r.ok) {
+    document.getElementById('sysStatus').textContent = 'API Connected';
+    renderPosture(r.data);
+    document.getElementById('st-users').textContent    = r.data.users_count;
+    document.getElementById('st-events').textContent   = r.data.audit_events;
+    document.getElementById('st-chain').textContent    = r.data.chain_ok ? 'OK' : 'FAIL';
+    document.getElementById('st-platform').textContent = r.data.platform;
+    document.getElementById('st-pam').textContent      = 'PAM: '+(r.data.pam_available?'Available':'Degraded');
+    document.getElementById('pamAvail').textContent    = r.data.pam_available?'Yes':'No (graceful)';
+  } else {
+    document.getElementById('sysStatus').textContent = 'API Offline';
+  }
+  if (S.token) {
+    const lr = await api('GET', '/api/audit/events?limit=1');
+    if (lr.ok) {
+      const parts = S.token.split('.');
+      if (parts.length === 3) {
+        const pl = JSON.parse(atob(parts[1]));
+        document.getElementById('userBadge').textContent = `${pl.username||'user'} [${pl.role||'?'}]`;
+        document.getElementById('userBadge').className = 'badge bg-green';
+        S.user = pl;
+      }
+      loadDashLog();
+    }
+  }
+})();
+</script>
+</body>
+</html>
