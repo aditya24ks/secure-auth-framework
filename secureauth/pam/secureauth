@@ -1,0 +1,29 @@
+# /etc/pam.d/secureauth
+# SecureAuth PAM service configuration
+#
+# Install: sudo cp pam/secureauth /etc/pam.d/secureauth
+# Then python-pam can authenticate against the OS using service="secureauth"
+#
+# Auth stack — tries Unix password first, then allows
+# pluggable MFA modules if desired
+
+# Standard Unix authentication
+auth      required   pam_unix.so     nullok_secure
+
+# Optional: enforce strong passwords via pam_pwquality
+# auth    required   pam_pwquality.so retry=3 minlen=12
+
+# Optional: limit failed login attempts (ties into lockout policy)
+# auth    required   pam_tally2.so   onerr=fail deny=5 unlock_time=900
+
+# Account management (check expiry, lock status)
+account   required   pam_unix.so
+
+# Password management (enforce quality on passwd changes)
+password  required   pam_unix.so     sha512 shadow nullok
+
+# Session management
+session   required   pam_unix.so
+
+# Optional: log all SecureAuth sessions to syslog
+# session optional   pam_exec.so     /usr/local/bin/secureauth-session-hook.sh
