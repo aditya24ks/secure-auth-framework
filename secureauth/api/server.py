@@ -1,7 +1,7 @@
 """
 SecureAuth - REST API Server
 All endpoints use real cryptography, actual JWT tokens, proper rate limiting,
-and full audit logging.
+and full audit  logging.
 """
 
 import os
