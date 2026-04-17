@@ -1,4 +1,5 @@
 # SecureAuth Framework
+CA2 project OS
 
 A robust authentication framework integrating with existing operating systems.
 
@@ -29,3 +30,4 @@ python cli.py hash benchmark
 - static/index.html         Admin dashboard
 - tests/test_suite.py       83/84 tests pass
 - cli.py                    CLI admin tool
+- 
