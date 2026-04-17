@@ -5,7 +5,7 @@ Implements: PAM (Linux) integration, Windows LSA stub, OS-level session
 
 NOTE: PAM calls require the python-pam package and the process must have
       appropriate privileges. This module degrades gracefully when PAM
-      is unavailable (e.g., in containerised / non-Linux environments).
+      is unavailable (e.g., in containerised /  non-Linux environments).
 """
 
 import os
